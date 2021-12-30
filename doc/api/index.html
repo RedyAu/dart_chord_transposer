@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="generator" content="made with love by dartdoc 4.1.0">
+  <meta name="description" content="chord_transposer API docs, for the Dart programming language.">
+  <title>chord_transposer - Dart API docs</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <link rel="stylesheet" href="static-assets/github.css?v1">
+  <link rel="stylesheet" href="static-assets/styles.css?v1">
+  <link rel="icon" href="static-assets/favicon.png?v1">
+
+  
+</head>
+
+
+<body data-base-href=""
+      data-using-base-href="false">
+
+<div id="overlay-under-drawer"></div>
+
+<header id="title">
+  <button id="sidenav-left-toggle" type="button">&nbsp;</button>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="https://github.com/JakesMD/chord_transposer">chord_transposer package</a></li>
+  </ol>
+  <div class="self-name">chord_transposer</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+
+<main>
+
+
+  <div id="dartdoc-main-content" class="main-content">
+      
+<section class="desc markdown">
+  <p>A Dart package for transposing chords into any given key.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>Transpose chords from one key to another</li>
+<li>Transpose chords up or down semitones</li>
+<li>Find chords in lyrics and transpose them into another key</li>
+<li>Find chords in lyrics and transpose up or down semitones</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<p>First initialize the ChordTransposer:</p>
+<pre class="language-dart"><code class="language-dart">final transposer = ChordTransposer();
+</code></pre>
+<h3 id="transpose-chords">Transpose chords</h3>
+<p>Transpose a single chord from one key to another:</p>
+<pre class="language-dart"><code>transposer.chordToKey(chord: 'D/F#', fromKey: 'A', toKey: 'G'); // =&gt; C/E
+</code></pre>
+<p>Transpose multiple chords from one key to another. If <code>fromKey</code> is not given, it will use the first chord in the list:</p>
+<pre class="language-dart"><code>transposer.chordsToKey(chords: ['C', 'F', 'Am', 'G7', 'Bdim'], toKey: 'E'); // =&gt; [E, A, C#m, B7, D#dim]
+</code></pre>
+<p>Transpose a single chord up or down semitones:</p>
+<pre class="language-dart"><code>transposer.chordUp(chord: 'D', semitones: 5); // =&gt; G
+transposer.chordDown(chord: 'Bb', semitones: 2); // =&gt; Ab
+</code></pre>
+<p>Transpose multiple chords up or down semitones:</p>
+<pre class="language-dart"><code>transposer.chordsUp(chords: ['D','Aadd9'], semitones: 4); // =&gt; [Gb, Dbadd9]
+transposer.chordsDown(chords: ['Bb7/D', 'Eb'], semitones: 6); // =&gt; [E7/G#, A]
+</code></pre>
+<h3 id="transpose-lyrics">Transpose lyrics</h3>
+<pre class="language-dart"><code>final lyrics = '''
+[C]Twinkle, twinkle [F]little [C]star.
+[F]How I [C]wonder [G7]what you [C]are.
+''';
+</code></pre>
+<p>Tranpose lyrics from one key to another. If <code>fromKey</code> is not given, it will use the first chord in the lyrics. When <code>ignoreInvalids</code> is set to <code>true</code> (default), it will ignore all invalid chords. When it is set to <code>false</code>, it will throw an error if there is an invalid chord:</p>
+<pre class="language-dart"><code>transposer.lyricsToKey(lyrics: lyrics, fromKey: 'C', toKey: 'G'); // =&gt;
+// [G]Twinkle, twinkle [C]little [G]star.
+// [C]How I [G]wonder [D7]what you [G]are.
+</code></pre>
+<p>Transpose lyrics up or down semitones:</p>
+<pre class="language-dart"><code>transposer.lyricsUp(lyrics: lyrics, semitones: 5); // =&gt;
+// [F]Twinkle, twinkle [A]little [F]star.
+// [Bb]How I [F]wonder [C7]what you [F]are.
+
+transposer.lyricsDown(lyrics: lyrics, semitones: 3); // =&gt;
+// [A]Twinkle, twinkle [D]little [A]star.
+// [D]How I [A]wonder [E7]what you [A]are.
+</code></pre>
+<h2 id="additional-information">Additional information</h2>
+<p>This package built to work with paurakhsharma's <a href="https://github.com/paurakhsharma/flutter_chord">flutter_chord</a> package and was inpsired by ddycai's <a href="https://github.com/ddycai/chord-transposer">chord-transposer</a> npm package.</p>
+</section>
+
+
+      <section class="summary">
+          <h2>Libraries</h2>
+        <dl>
+          <dt id="chord_transposer">
+  <span class="name"><a href="chord_transposer/chord_transposer-library.html">chord_transposer</a></span> 
+
+</dt>
+<dd> 
+</dd>
+
+        </dl>
+      </section>
+
+  </div> <!-- /.main-content -->
+
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+  <li><a href="https://github.com/JakesMD/chord_transposer">chord_transposer package</a></li>
+</ol>
+
+
+    <h5 class="hidden-xs"><span class="package-name">chord_transposer</span> <span class="package-kind">package</span></h5>
+    <ol>
+      <li class="section-title">Libraries</li>
+      <li><a href="chord_transposer/chord_transposer-library.html">chord_transposer</a></li>
+</ol>
+
+  </div>
+
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div>
+
+</main>
+
+<footer>
+  <span class="no-break">
+    chord_transposer
+      0.0.1
+  </span>
+
+  
+</footer>
+
+
+
+<script src="static-assets/highlight.pack.js?v1"></script>
+<script src="static-assets/script.js?v1"></script>
+
+
+
+</body>
+
+</html>
+

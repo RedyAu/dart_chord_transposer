@@ -1,6 +1,6 @@
 name: chord_transposer
 description: A Dart package for transposing chords into any given key.
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/JakesMD/chord_transposer
 
 environment:

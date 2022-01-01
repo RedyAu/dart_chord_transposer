@@ -5,10 +5,13 @@ void main() {
   final transposer = ChordTransposer();
 
   // Transpose chord D/F# from key A to key G.
-  print(transposer.chordToKey(chord: 'D/F#', fromKey: 'A', toKey: 'G')); // => C/E
+  print(
+      transposer.chordToKey(chord: 'D/F#', fromKey: 'A', toKey: 'G')); // => C/E
 
   // Transpose chords C, F, Am, G7 and Bdim from key C to key E.
-  print(transposer.chordsToKey(chords: ['C', 'F', 'Am', 'G7', 'Bdim'], toKey: 'E')); // => [E, A, C#m, B7, D#dim]
+  print(transposer.chordsToKey(
+      chords: ['C', 'F', 'Am', 'G7', 'Bdim'],
+      toKey: 'E')); // => [E, A, C#m, B7, D#dim]
 
   // Transpose chord D chord up 5 semitones.
   print(transposer.chordUp(chord: 'D', semitones: 5)); // => G
@@ -17,10 +20,12 @@ void main() {
   print(transposer.chordDown(chord: 'Bb', semitones: 2)); // => Ab
 
   // Transpose chords D and Aadd9 up 4 semitones.
-  print(transposer.chordsUp(chords: ['D', 'Aadd9'], semitones: 4)); // => [Gb, Dbadd9]
+  print(transposer
+      .chordsUp(chords: ['D', 'Aadd9'], semitones: 4)); // => [Gb, Dbadd9]
 
   // Transpose chords Bb7/D and Eb down 6 semitones.
-  print(transposer.chordsDown(chords: ['Bb7/D', 'Eb'], semitones: 6)); // => [E7/G#, A]
+  print(transposer
+      .chordsDown(chords: ['Bb7/D', 'Eb'], semitones: 6)); // => [E7/G#, A]
 
   final lyrics = '''
 [C]Twinkle, twinkle [F]little [C]star.

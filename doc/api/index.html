@@ -58,32 +58,32 @@
 </code></pre>
 <h3 id="transpose-chords">Transpose chords</h3>
 <p>Transpose a single chord from one key to another:</p>
-<pre class="language-dart"><code>transposer.chordToKey(chord: 'D/F#', fromKey: 'A', toKey: 'G'); // =&gt; C/E
+<pre class="language-dart"><code class="language-dart">transposer.chordToKey(chord: 'D/F#', fromKey: 'A', toKey: 'G'); // =&gt; C/E
 </code></pre>
 <p>Transpose multiple chords from one key to another. If <code>fromKey</code> is not given, it will use the first chord in the list:</p>
-<pre class="language-dart"><code>transposer.chordsToKey(chords: ['C', 'F', 'Am', 'G7', 'Bdim'], toKey: 'E'); // =&gt; [E, A, C#m, B7, D#dim]
+<pre class="language-dart"><code class="language-dart">transposer.chordsToKey(chords: ['C', 'F', 'Am', 'G7', 'Bdim'], toKey: 'E'); // =&gt; [E, A, C#m, B7, D#dim]
 </code></pre>
 <p>Transpose a single chord up or down semitones:</p>
-<pre class="language-dart"><code>transposer.chordUp(chord: 'D', semitones: 5); // =&gt; G
+<pre class="language-dart"><code class="language-dart">transposer.chordUp(chord: 'D', semitones: 5); // =&gt; G
 transposer.chordDown(chord: 'Bb', semitones: 2); // =&gt; Ab
 </code></pre>
 <p>Transpose multiple chords up or down semitones:</p>
-<pre class="language-dart"><code>transposer.chordsUp(chords: ['D','Aadd9'], semitones: 4); // =&gt; [Gb, Dbadd9]
+<pre class="language-dart"><code class="language-dart">transposer.chordsUp(chords: ['D','Aadd9'], semitones: 4); // =&gt; [Gb, Dbadd9]
 transposer.chordsDown(chords: ['Bb7/D', 'Eb'], semitones: 6); // =&gt; [E7/G#, A]
 </code></pre>
 <h3 id="transpose-lyrics">Transpose lyrics</h3>
-<pre class="language-dart"><code>final lyrics = '''
+<pre class="language-dart"><code class="language-dart">final lyrics = '''
 [C]Twinkle, twinkle [F]little [C]star.
 [F]How I [C]wonder [G7]what you [C]are.
 ''';
 </code></pre>
 <p>Tranpose lyrics from one key to another. If <code>fromKey</code> is not given, it will use the first chord in the lyrics. When <code>ignoreInvalids</code> is set to <code>true</code> (default), it will ignore all invalid chords. When it is set to <code>false</code>, it will throw an error if there is an invalid chord:</p>
-<pre class="language-dart"><code>transposer.lyricsToKey(lyrics: lyrics, fromKey: 'C', toKey: 'G'); // =&gt;
+<pre class="language-dart"><code class="language-dart">transposer.lyricsToKey(lyrics: lyrics, fromKey: 'C', toKey: 'G'); // =&gt;
 // [G]Twinkle, twinkle [C]little [G]star.
 // [C]How I [G]wonder [D7]what you [G]are.
 </code></pre>
 <p>Transpose lyrics up or down semitones:</p>
-<pre class="language-dart"><code>transposer.lyricsUp(lyrics: lyrics, semitones: 5); // =&gt;
+<pre class="language-dart"><code class="language-dart">transposer.lyricsUp(lyrics: lyrics, semitones: 5); // =&gt;
 // [F]Twinkle, twinkle [A]little [F]star.
 // [Bb]How I [F]wonder [C7]what you [F]are.
 

@@ -1,24 +1,80 @@
+/*
+MIT License
+
+Copyright (c) 2017 Duncan Cai
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+https://github.com/ddycai/chord-transposer
+*/
+
 // ignore_for_file: non_constant_identifier_names
 
 import 'chord.dart' show rootPattern, minorPattern, Chord;
 
 // Chromatic scale starting from C using flats only.
-const List<String> flatScale = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "Cb"];
+const List<String> flatScale = [
+  "C",
+  "Db",
+  "D",
+  "Eb",
+  "E",
+  "F",
+  "Gb",
+  "G",
+  "Ab",
+  "A",
+  "Bb",
+  "Cb"
+];
 
 // Chromatic scale starting from C using sharps only.
-const List<String> sharpScale = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const List<String> sharpScale = [
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B"
+];
 
 // Chromatic scale for F# major which includes E#.
-final List<String> FSharpScale = sharpScale.map((note) => identical(note, "F") ? "E#" : note).toList();
+final List<String> FSharpScale =
+    sharpScale.map((note) => identical(note, "F") ? "E#" : note).toList();
 
 // Chromatic scale for C# major which includes E# and B#.
-final List<String> CSharpScale = FSharpScale.map((note) => identical(note, "C") ? "B#" : note).toList();
+final List<String> CSharpScale =
+    FSharpScale.map((note) => identical(note, "C") ? "B#" : note).toList();
 
 // Chromatic scale for Gb major which includes Cb.
-final List<String> GFlatScale = flatScale.map((note) => identical(note, "B") ? "Cb" : note).toList();
+final List<String> GFlatScale =
+    flatScale.map((note) => identical(note, "B") ? "Cb" : note).toList();
 
 // Chromatic scale for Cb major which includes Cb and Fb.
-final List<String> CFlatScale = GFlatScale.map((note) => identical(note, "E") ? "Fb" : note).toList();
+final List<String> CFlatScale =
+    GFlatScale.map((note) => identical(note, "E") ? "Fb" : note).toList();
 
 final RegExp keySignatureRegExp = RegExp("($rootPattern)($minorPattern)?");
 
@@ -30,7 +86,8 @@ class KeySignature {
   KeyType keyType;
   int rank;
   List<String> chromaticScale;
-  KeySignature(this.majorKey, this.relativeMinor, this.keyType, this.rank, this.chromaticScale);
+  KeySignature(this.majorKey, this.relativeMinor, this.keyType, this.rank,
+      this.chromaticScale);
 }
 
 // A list of all the available key signatures.
@@ -81,7 +138,8 @@ class KeySignatureProcessor {
   KeySignature parse(String text) {
     if (keySignatureRegExp.hasMatch(text)) {
       final Chord _chord = Chord.parse(text);
-      final String _signatureName = _chord.isMinor() ? _chord.root + "m" : _chord.root;
+      final String _signatureName =
+          _chord.isMinor() ? _chord.root + "m" : _chord.root;
       final KeySignature? _foundSignature = _keySignatureMap[_signatureName];
       if (_foundSignature != null) return _foundSignature;
 

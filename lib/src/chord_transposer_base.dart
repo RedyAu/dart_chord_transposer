@@ -74,6 +74,7 @@ class ChordTransposer {
       transpositionMap[chord.root]!,
       chord.suffix,
       chord.bass.isNotEmpty ? transpositionMap[chord.bass]! : '',
+      wasRootLowercase: chord.wasRootLowercase,
     );
   }
 

@@ -120,22 +120,22 @@ Map<String, int> get chordRanks => chordRanksFor(NoteNotation.english);
 String rootPatternFor(NoteNotation notation) {
   switch (notation) {
     case NoteNotation.english:
-      return r"^(?<root>[A-G](#|b)?)";
+      return r"^(?<root>[A-Ga-g](#|b)?)";
     case NoteNotation.german:
-      return r"^(?<root>[A-G](is|es|s)?|H(is)?|B)";
+      return r"^(?<root>[A-Ga-g](is|es|s)?|[Hh](is)?|[Bb])";
     case NoteNotation.germanWithAccidentals:
-      return r"^(?<root>[A-G](#|b)?|H(#)?|B)";
+      return r"^(?<root>[A-Ga-g](#|b)?|[Hh](#)?|[Bb])";
   }
 }
 
 String bassPatternFor(NoteNotation notation) {
   switch (notation) {
     case NoteNotation.english:
-      return r"(\/(?<bass>([A-G](#|b)?)))?";
+      return r"(\/(?<bass>([A-Ga-g](#|b)?)))?";
     case NoteNotation.german:
-      return r"(\/(?<bass>([A-G](is|es|s)?|H(is)?|B)))?";
+      return r"(\/(?<bass>([A-Ga-g](is|es|s)?|[Hh](is)?|[Bb])))?";
     case NoteNotation.germanWithAccidentals:
-      return r"(\/(?<bass>([A-G](#|b)?|H(#)?|B)))?";
+      return r"(\/(?<bass>([A-Ga-g](#|b)?|[Hh](#)?|[Bb])))?";
   }
 }
 
@@ -160,13 +160,16 @@ class Chord {
   final String root;
   final String suffix;
   final String bass;
+  final bool wasRootLowercase;
 
-  Chord(this.root, this.suffix, this.bass);
+  Chord(this.root, this.suffix, this.bass, {this.wasRootLowercase = false});
 
   @override
   String toString() {
-    if (bass.isNotEmpty) return "$root$suffix/$bass";
-    return root + suffix;
+    String formattedRoot = wasRootLowercase ? root.toLowerCase() : root;
+    
+    if (bass.isNotEmpty) return "$formattedRoot$suffix/$bass";
+    return formattedRoot + suffix;
   }
 
   bool isMinor() => minorSufficRegex.hasMatch(suffix);
@@ -178,10 +181,22 @@ class Chord {
     final RegExp regex = chordRegexFor(notation);
     if (!regex.hasMatch(text)) throw Exception("$text is not a valid chord");
     final RegExpMatch result = regex.firstMatch(text)!;
+    
+    String rootText = result.namedGroup('root')!;
+    bool wasRootLowercase = rootText.isNotEmpty && 
+                          rootText[0].toLowerCase() == rootText[0] && 
+                          rootText[0].toUpperCase() != rootText[0];
+    
+    // Normalize the root to uppercase for internal representation
+    String normalizedRoot = wasRootLowercase 
+        ? rootText[0].toUpperCase() + rootText.substring(1) 
+        : rootText;
+    
     return Chord(
-      result.namedGroup('root')!,
+      normalizedRoot,
       result.namedGroup('suffix') ?? '',
       result.namedGroup('bass') ?? '',
+      wasRootLowercase: wasRootLowercase,
     );
   }
 

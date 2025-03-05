@@ -325,4 +325,73 @@ void main() {
       expect(transposer.chordsUp(chords: [], semitones: 2), equals([]));
     });
   });
+
+  group('Case Sensitivity Tests', () {
+    test('Should preserve case in chord parsing', () {
+      final cChord = Chord.parse('C', NoteNotation.english);
+      expect(cChord.wasRootLowercase, isFalse);
+      expect(cChord.toString(), equals('C'));
+
+      final cLowerChord = Chord.parse('c', NoteNotation.english);
+      expect(cLowerChord.wasRootLowercase, isTrue);
+      expect(cLowerChord.toString(), equals('c'));
+
+      final cmChord = Chord.parse('cm', NoteNotation.english);
+      expect(cmChord.wasRootLowercase, isTrue);
+      expect(cmChord.toString(), equals('cm'));
+
+      final cMajorChord = Chord.parse('Cmaj7', NoteNotation.english);
+      expect(cMajorChord.wasRootLowercase, isFalse);
+      expect(cMajorChord.toString(), equals('Cmaj7'));
+    });
+
+    test('Should preserve case during transposition', () {
+      final transposer = ChordTransposer(notation: NoteNotation.english);
+
+      // Uppercase major chord
+      expect(transposer.chordUp(chord: 'C', semitones: 2), equals('D'));
+
+      // Lowercase chord (acts as if it's a major chord for transposition)
+      expect(transposer.chordUp(chord: 'c', semitones: 2), equals('d'));
+
+      // Uppercase minor chord
+      expect(transposer.chordUp(chord: 'Cm', semitones: 2), equals('Dm'));
+
+      // Lowercase minor chord
+      expect(transposer.chordUp(chord: 'cm', semitones: 2), equals('dm'));
+
+      // Complex chords should preserve case
+      expect(transposer.chordUp(chord: 'cmaj7', semitones: 2), equals('dmaj7'));
+    });
+
+    test('Should preserve case in chord progressions', () {
+      final transposer = ChordTransposer(notation: NoteNotation.english);
+
+      final mixedChords = ['C', 'Dm', 'em', 'f'];
+      final transposedChords = transposer.chordsUp(
+        chords: mixedChords,
+        semitones: 7,
+      );
+      expect(transposedChords, equals(['G', 'Am', 'bm', 'c']));
+    });
+
+    test('Should preserve case in lyrics with chords', () {
+      final transposer = ChordTransposer(notation: NoteNotation.english);
+      const lyrics = '''
+[C]Twinkle, twinkle, [G]little star,
+[f]How I [cm]wonder [G]what you [c]are!
+''';
+
+      final transposedLyrics = transposer.lyricsUp(
+        lyrics: lyrics,
+        semitones: 2,
+      );
+      expect(transposedLyrics, contains('[D]Twinkle'));
+      expect(transposedLyrics, contains('[A]little star'));
+      expect(transposedLyrics, contains('[g]How I'));
+      expect(transposedLyrics, contains('[dm]wonder'));
+      expect(transposedLyrics, contains('[A]what you'));
+      expect(transposedLyrics, contains('[d]are!'));
+    });
+  });
 }

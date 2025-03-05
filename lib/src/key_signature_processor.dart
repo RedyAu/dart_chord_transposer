@@ -114,10 +114,10 @@ final List<KeySignature> signatures = [
 
 /// An object that parses and calculates key signatures.
 class KeySignatureProcessor {
-  /// A map of all the KeySignatures with their name. <key name, key signature>.
+  /// A map of all the KeySignatures with their name. `<`key name, key signature>.
   late Map<String, KeySignature> _keySignatureMap;
 
-  /// A map of all the KeySignatures with their rank. <key rank, key signature>.
+  /// A map of all the KeySignatures with their rank. `<`key rank, key signature>.
   late Map<num, KeySignature> _rankMap;
 
   KeySignatureProcessor() {
@@ -125,11 +125,11 @@ class KeySignatureProcessor {
     _rankMap = {};
 
     /// Generated the rankMap and keySignatureMap from the list of signatures.
-    for (KeySignature _signature in signatures) {
-      _keySignatureMap.addAll({_signature.majorKey: _signature});
-      _keySignatureMap.addAll({_signature.relativeMinor: _signature});
-      if (!_rankMap.containsKey(_signature.rank)) {
-        _rankMap.addAll({_signature.rank: _signature});
+    for (KeySignature signature in signatures) {
+      _keySignatureMap.addAll({signature.majorKey: signature});
+      _keySignatureMap.addAll({signature.relativeMinor: signature});
+      if (!_rankMap.containsKey(signature.rank)) {
+        _rankMap.addAll({signature.rank: signature});
       }
     }
   }
@@ -137,15 +137,15 @@ class KeySignatureProcessor {
   /// Returns the KeySignature with the specific name or throws an error if the key signature is not valid.
   KeySignature parse(String text) {
     if (keySignatureRegExp.hasMatch(text)) {
-      final Chord _chord = Chord.parse(text);
-      final String _signatureName =
-          _chord.isMinor() ? _chord.root + "m" : _chord.root;
-      final KeySignature? _foundSignature = _keySignatureMap[_signatureName];
-      if (_foundSignature != null) return _foundSignature;
+      final Chord chord = Chord.parse(text);
+      final String signatureName =
+          chord.isMinor() ? "${chord.root}m" : chord.root;
+      final KeySignature? foundSignature = _keySignatureMap[signatureName];
+      if (foundSignature != null) return foundSignature;
 
       // If all else fails, try to find any key with this chord in it.
-      for (KeySignature _signature in signatures) {
-        if (_signature.chromaticScale.contains(_chord.root)) return _signature;
+      for (KeySignature signature in signatures) {
+        if (signature.chromaticScale.contains(chord.root)) return signature;
       }
     }
     throw Exception("$text is not a valid key signature.");
@@ -153,15 +153,15 @@ class KeySignatureProcessor {
 
   /// Gets Keysignature from rank.
   KeySignature fromRank(int rank) {
-    final KeySignature? _signature = _rankMap[rank];
-    if (_signature != null) return _signature;
+    final KeySignature? signature = _rankMap[rank];
+    if (signature != null) return signature;
     throw Exception("$rank is not a valid rank.");
   }
 
   /// Transforms the given chord into a key signature.
   KeySignature guessKeySignature(Chord chord) {
-    String _signature = chord.root;
-    if (chord.isMinor()) _signature += "m";
-    return parse(_signature);
+    String signature = chord.root;
+    if (chord.isMinor()) signature += "m";
+    return parse(signature);
   }
 }

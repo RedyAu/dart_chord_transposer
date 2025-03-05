@@ -71,7 +71,7 @@ class Chord {
 
   @override
   String toString() {
-    if (bass.isNotEmpty) return root + suffix + "/" + bass;
+    if (bass.isNotEmpty) return "$root$suffix/$bass";
     return root + suffix;
   }
 
@@ -79,9 +79,9 @@ class Chord {
 
   static Chord parse(String text) {
     if (!isChord(text)) throw Exception("$text is not a valid chord");
-    final RegExpMatch _result = chordRegex.firstMatch(text)!;
-    return Chord(_result.namedGroup('root')!,
-        _result.namedGroup('suffix') ?? '', _result.namedGroup('bass') ?? '');
+    final RegExpMatch result = chordRegex.firstMatch(text)!;
+    return Chord(result.namedGroup('root')!,
+        result.namedGroup('suffix') ?? '', result.namedGroup('bass') ?? '');
   }
 
   static bool isChord(token) => chordRegex.hasMatch(token);

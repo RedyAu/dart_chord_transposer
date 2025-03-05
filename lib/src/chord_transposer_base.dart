@@ -24,8 +24,8 @@ SOFTWARE.
 https://github.com/ddycai/chord-transposer
 */
 
-import 'package:chord_transposer/src/chord.dart' show chordRanks, Chord;
-import 'package:chord_transposer/src/key_signature_processor.dart'
+import 'chord.dart' show chordRanks, Chord;
+import 'key_signature_processor.dart'
     show KeySignature, KeySignatureProcessor;
 
 /// An object that transposes chords into any given key.
@@ -38,21 +38,21 @@ class ChordTransposer {
 
   /// Finds the key that is a specified number of semitones above/below the current key.
   KeySignature _transposeKey(KeySignature currentKey, int semitones) {
-    final int _newRank = (currentKey.rank + semitones + 12) % 12;
-    return _kSP.fromRank(_newRank);
+    final int newRank = (currentKey.rank + semitones + 12) % 12;
+    return _kSP.fromRank(newRank);
   }
 
   /// Given the current key and the number of semitones to transpose, returns a mapping from each note to a transposed note.
   Map<String, String> _createTranspositionMap(
       KeySignature currentKey, KeySignature newKey) {
-    Map<String, String> _map = {};
-    final int _semitones = _semitonesBetween(currentKey, newKey);
-    final List<String> _scale = newKey.chromaticScale;
-    chordRanks.forEach((_chord, _rank) {
-      final int newRank = (_rank + _semitones + 12) % 12;
-      _map.addAll({_chord: _scale[newRank]});
+    Map<String, String> map = {};
+    final int semitones = _semitonesBetween(currentKey, newKey);
+    final List<String> scale = newKey.chromaticScale;
+    chordRanks.forEach((chord, rank) {
+      final int newRank = (rank + semitones + 12) % 12;
+      map.addAll({chord: scale[newRank]});
     });
-    return _map;
+    return map;
   }
 
   /// Transposes the root and bass of the given chord using the given transpositionMap.
@@ -65,39 +65,39 @@ class ChordTransposer {
   /// Finds chords in the given lyrics and transposes them to the given key.
   String _transposeLyricsFromTranspositionMap(String lyrics, String? fromKey,
       KeySignature Function(KeySignature fromKey) toKey, bool ignoreInvalids) {
-    String _newLyrics = '';
-    KeySignature _fromKey;
-    Map<String, String> _transpositionMap = {};
+    String newLyrics = '';
+    KeySignature fromKey0;
+    Map<String, String> transpositionMap = {};
 
-    final List<RegExpMatch> _matches =
+    final List<RegExpMatch> matches =
         RegExp(r"\[([^\]]*)").allMatches(lyrics).toList();
 
-    int _lastMatchEnd = 0;
+    int lastMatchEnd = 0;
 
-    for (int x = 0; x < _matches.length; x++) {
-      if (Chord.isChord(_matches[x].group(1)!) || !ignoreInvalids) {
-        final Chord _oldChord = Chord.parse(_matches[x].group(1)!);
+    for (int x = 0; x < matches.length; x++) {
+      if (Chord.isChord(matches[x].group(1)!) || !ignoreInvalids) {
+        final Chord oldChord = Chord.parse(matches[x].group(1)!);
         // If not already, calcuate _fromKey and create the transpositionMap.
-        if (_transpositionMap.isEmpty) {
+        if (transpositionMap.isEmpty) {
           if (fromKey != null) {
-            _fromKey = _kSP.parse(fromKey);
+            fromKey0 = _kSP.parse(fromKey);
           } else {
-            _fromKey = _kSP.guessKeySignature(_oldChord);
+            fromKey0 = _kSP.guessKeySignature(oldChord);
           }
-          _transpositionMap =
-              _createTranspositionMap(_fromKey, toKey(_fromKey));
+          transpositionMap =
+              _createTranspositionMap(fromKey0, toKey(fromKey0));
         }
-        final String _newChord =
-            _transposeChordFromTranspositionMap(_oldChord, _transpositionMap)
+        final String newChord =
+            _transposeChordFromTranspositionMap(oldChord, transpositionMap)
                 .toString();
-        _newLyrics +=
-            lyrics.substring(_lastMatchEnd, _matches[x].start + 1) + _newChord;
-        _lastMatchEnd = _matches[x].end;
+        newLyrics +=
+            lyrics.substring(lastMatchEnd, matches[x].start + 1) + newChord;
+        lastMatchEnd = matches[x].end;
       }
     }
-    _newLyrics += lyrics.substring(_lastMatchEnd);
+    newLyrics += lyrics.substring(lastMatchEnd);
 
-    return _newLyrics;
+    return newLyrics;
   }
 
   /// Transposes the given lyrics to the given key.
@@ -107,7 +107,7 @@ class ChordTransposer {
       required String toKey,
       bool ignoreInvalids = true}) {
     return _transposeLyricsFromTranspositionMap(
-        lyrics, fromKey, (_fromKey) => _kSP.parse(toKey), ignoreInvalids);
+        lyrics, fromKey, (fromKey) => _kSP.parse(toKey), ignoreInvalids);
   }
 
   /// Transposes the given lyrics up the given semitones.
@@ -117,7 +117,7 @@ class ChordTransposer {
       required int semitones,
       bool ignoreInvalids = true}) {
     return _transposeLyricsFromTranspositionMap(lyrics, fromKey,
-        (_fromKey) => _transposeKey(_fromKey, semitones), ignoreInvalids);
+        (fromKey) => _transposeKey(fromKey, semitones), ignoreInvalids);
   }
 
   /// Transposes the given lyrics down the given semitones.
@@ -136,11 +136,11 @@ class ChordTransposer {
   /// Transposes the given chord to the given key.
   String chordToKey(
       {required String chord, required String fromKey, required String toKey}) {
-    final Chord _newChord = Chord.parse(chord);
-    final KeySignature _fromKey = _kSP.parse(fromKey);
-    final Map<String, String> _transpositionMap =
-        _createTranspositionMap(_fromKey, _kSP.parse(toKey));
-    return _transposeChordFromTranspositionMap(_newChord, _transpositionMap)
+    final Chord newChord = Chord.parse(chord);
+    final KeySignature fromKey0 = _kSP.parse(fromKey);
+    final Map<String, String> transpositionMap =
+        _createTranspositionMap(fromKey0, _kSP.parse(toKey));
+    return _transposeChordFromTranspositionMap(newChord, transpositionMap)
         .toString();
   }
 
@@ -149,35 +149,35 @@ class ChordTransposer {
       {required List<String> chords, String? fromKey, required String toKey}) {
     if (chords.isEmpty) return [];
 
-    List<Chord> _oldChords = chords.map((chord) => Chord.parse(chord)).toList();
-    List<String> _newChords = [];
-    final KeySignature _fromKey = fromKey != null
+    List<Chord> oldChords = chords.map((chord) => Chord.parse(chord)).toList();
+    List<String> newChords = [];
+    final KeySignature fromKey0 = fromKey != null
         ? _kSP.parse(fromKey)
-        : _kSP.guessKeySignature(_oldChords[0]);
-    final KeySignature _toKey = _kSP.parse(toKey);
-    final Map<String, String> _transpositionMap =
-        _createTranspositionMap(_fromKey, _toKey);
+        : _kSP.guessKeySignature(oldChords[0]);
+    final KeySignature toKey0 = _kSP.parse(toKey);
+    final Map<String, String> transpositionMap =
+        _createTranspositionMap(fromKey0, toKey0);
 
-    for (Chord _chord in _oldChords) {
-      _newChords.add(
-          _transposeChordFromTranspositionMap(_chord, _transpositionMap)
+    for (Chord chord in oldChords) {
+      newChords.add(
+          _transposeChordFromTranspositionMap(chord, transpositionMap)
               .toString());
     }
 
-    return _newChords;
+    return newChords;
   }
 
   /// Tranposes the given chord up the given semitones.
   String chordUp(
       {required String chord, String? fromKey, required int semitones}) {
-    final Chord _newChord = Chord.parse(chord);
-    final KeySignature _fromKey = fromKey != null
+    final Chord newChord = Chord.parse(chord);
+    final KeySignature fromKey0 = fromKey != null
         ? _kSP.parse(fromKey)
-        : _kSP.guessKeySignature(_newChord);
-    final KeySignature _toKey = _transposeKey(_fromKey, semitones);
-    final Map<String, String> _transpositionMap =
-        _createTranspositionMap(_fromKey, _toKey);
-    return _transposeChordFromTranspositionMap(_newChord, _transpositionMap)
+        : _kSP.guessKeySignature(newChord);
+    final KeySignature toKey = _transposeKey(fromKey0, semitones);
+    final Map<String, String> transpositionMap =
+        _createTranspositionMap(fromKey0, toKey);
+    return _transposeChordFromTranspositionMap(newChord, transpositionMap)
         .toString();
   }
 
@@ -192,22 +192,22 @@ class ChordTransposer {
       {required List<String> chords, String? fromKey, required int semitones}) {
     if (chords.isEmpty) return [];
 
-    List<Chord> _oldChords = chords.map((chord) => Chord.parse(chord)).toList();
-    List<String> _newChords = [];
-    final KeySignature _fromKey = fromKey != null
+    List<Chord> oldChords = chords.map((chord) => Chord.parse(chord)).toList();
+    List<String> newChords = [];
+    final KeySignature fromKey0 = fromKey != null
         ? _kSP.parse(fromKey)
-        : _kSP.guessKeySignature(_oldChords[0]);
-    final KeySignature _toKey = _transposeKey(_fromKey, semitones);
-    final Map<String, String> _transpositionMap =
-        _createTranspositionMap(_fromKey, _toKey);
+        : _kSP.guessKeySignature(oldChords[0]);
+    final KeySignature toKey = _transposeKey(fromKey0, semitones);
+    final Map<String, String> transpositionMap =
+        _createTranspositionMap(fromKey0, toKey);
 
-    for (Chord _chord in _oldChords) {
-      _newChords.add(
-          _transposeChordFromTranspositionMap(_chord, _transpositionMap)
+    for (Chord chord in oldChords) {
+      newChords.add(
+          _transposeChordFromTranspositionMap(chord, transpositionMap)
               .toString());
     }
 
-    return _newChords;
+    return newChords;
   }
 
   /// Tranposes the given chords down the given semitones.

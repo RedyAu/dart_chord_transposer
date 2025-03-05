@@ -93,9 +93,8 @@ final Map<NoteNotation, List<List<String>>> baseScales = {
   ],
 };
 
-// Special scales for edge cases
-final Map<NoteNotation, List<String>> specialScales = {
-  // F# scales (with E#)
+// F# scales (with E#)
+final Map<NoteNotation, List<String>> fSharpScales = {
   NoteNotation.english: [
     "C",
     "C#",
@@ -280,7 +279,7 @@ final Map<NoteNotation, List<String>> cFlatScales = {
 
 enum KeyType { flat, sharp }
 
-/// Comprehensive definition of all key signatures
+/// Definition of all key signatures
 final List<KeyDefinition> keyDefinitions = [
   // C Major
   KeyDefinition(
@@ -447,19 +446,19 @@ final List<KeyDefinition> keyDefinitions = [
         majorKey: "F#",
         relativeMinor: "D#m",
         flatScale: baseScales[NoteNotation.english]![0],
-        sharpScale: specialScales[NoteNotation.english]!,
+        sharpScale: fSharpScales[NoteNotation.english]!,
       ),
       NoteNotation.german: NotationKeyDefinition(
         majorKey: "Fis",
         relativeMinor: "Dism",
         flatScale: baseScales[NoteNotation.german]![0],
-        sharpScale: specialScales[NoteNotation.german]!,
+        sharpScale: fSharpScales[NoteNotation.german]!,
       ),
       NoteNotation.germanWithAccidentals: NotationKeyDefinition(
         majorKey: "F#",
         relativeMinor: "D#m",
         flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
-        sharpScale: specialScales[NoteNotation.germanWithAccidentals]!,
+        sharpScale: fSharpScales[NoteNotation.germanWithAccidentals]!,
       ),
     },
   ),
@@ -722,10 +721,10 @@ class KeySignature {
 
 /// An object that parses and calculates key signatures.
 class KeySignatureProcessor {
-  /// A map of all the KeySignatures with their name. `<`key name, key signature>.
+  /// A map of all the KeySignatures with their name. &lt;key name, key signature>.
   late Map<String, KeySignature> _keySignatureMap;
 
-  /// A map of all the KeySignatures with their rank. `<`key rank, key signature>.
+  /// A map of all the KeySignatures with their rank. &lt;key rank, key signature>.
   late Map<num, KeySignature> _rankMap;
 
   final NoteNotation notation;

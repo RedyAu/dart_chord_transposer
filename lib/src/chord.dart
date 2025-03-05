@@ -24,37 +24,131 @@ SOFTWARE.
 https://github.com/ddycai/chord-transposer
 */
 
+/// This enum is used to differentiate between note notations.
+/// | english | german | germanWithAccidentals |
+/// |---------|--------|-----------------------|
+/// | B       | H      | H                     |
+/// | B#      | His    | H#                    |
+/// | Bb      | B      | B                     |
+/// | E       | E      | E                     |
+/// | E#      | Eis    | E#                    |
+/// | Eb      | Es     | Eb                    |
+enum NoteNotation { english, german, germanWithAccidentals }
+
 /// The rank for each possible chord. Rank is the distance in semitones from C.
-const Map<String, int> chordRanks = {
-  "B#": 0,
-  "C": 0,
-  "C#": 1,
-  "Db": 1,
-  "D": 2,
-  "D#": 3,
-  "Eb": 3,
-  "E": 4,
-  "Fb": 4,
-  "E#": 5,
-  "F": 5,
-  "F#": 6,
-  "Gb": 6,
-  "G": 7,
-  "G#": 8,
-  "Ab": 8,
-  "A": 9,
-  "A#": 10,
-  "Bb": 10,
-  "Cb": 11,
-  "B": 11,
-};
+Map<String, int> chordRanksFor(NoteNotation notation) {
+  switch (notation) {
+    case NoteNotation.english:
+      return {
+        "B#": 0,
+        "C": 0,
+        "C#": 1,
+        "Db": 1,
+        "D": 2,
+        "D#": 3,
+        "Eb": 3,
+        "E": 4,
+        "Fb": 4,
+        "E#": 5,
+        "F": 5,
+        "F#": 6,
+        "Gb": 6,
+        "G": 7,
+        "G#": 8,
+        "Ab": 8,
+        "A": 9,
+        "A#": 10,
+        "Bb": 10,
+        "Cb": 11,
+        "B": 11,
+      };
+    case NoteNotation.german:
+      return {
+        "His": 0,
+        "C": 0,
+        "Cis": 1,
+        "Des": 1,
+        "D": 2,
+        "Dis": 3,
+        "Es": 3,
+        "E": 4,
+        "Fes": 4,
+        "Eis": 5,
+        "F": 5,
+        "Fis": 6,
+        "Ges": 6,
+        "G": 7,
+        "Gis": 8,
+        "As": 8,
+        "A": 9,
+        "Ais": 10,
+        "B": 10,
+        "Ces": 11,
+        "H": 11,
+      };
+    case NoteNotation.germanWithAccidentals:
+      return {
+        "H#": 0,
+        "C": 0,
+        "C#": 1,
+        "Db": 1,
+        "D": 2,
+        "D#": 3,
+        "Eb": 3,
+        "E": 4,
+        "Fb": 4,
+        "E#": 5,
+        "F": 5,
+        "F#": 6,
+        "Gb": 6,
+        "G": 7,
+        "G#": 8,
+        "Ab": 8,
+        "A": 9,
+        "A#": 10,
+        "B": 10,
+        "Cb": 11,
+        "H": 11,
+      };
+  }
+}
+
+// For backward compatibility and default value
+Map<String, int> get chordRanks => chordRanksFor(NoteNotation.english);
 
 // Regex for recognizing chords.
-const String rootPattern = r"^(?<root>[A-G](#|b)?)";
+String rootPatternFor(NoteNotation notation) {
+  switch (notation) {
+    case NoteNotation.english:
+      return r"^(?<root>[A-G](#|b)?)";
+    case NoteNotation.german:
+      return r"^(?<root>[A-G](is|es|s)?|H(is)?|B)";
+    case NoteNotation.germanWithAccidentals:
+      return r"^(?<root>[A-G](#|b)?|H(#)?|B)";
+  }
+}
+
+String bassPatternFor(NoteNotation notation) {
+  switch (notation) {
+    case NoteNotation.english:
+      return r"(\/(?<bass>([A-G](#|b)?)))?";
+    case NoteNotation.german:
+      return r"(\/(?<bass>([A-G](is|es|s)?|H(is)?|B)))?";
+    case NoteNotation.germanWithAccidentals:
+      return r"(\/(?<bass>([A-G](#|b)?|H(#)?|B)))?";
+  }
+}
+
 const String suffixPattern = r"(?<suffix>[^\/]*)?";
-const String bassPattern = r"(\/(?<bass>([A-G](#|b)?)))?";
 const String minorPattern = r"^(minor|min|m[^a]*)";
-final RegExp chordRegex = RegExp("$rootPattern$suffixPattern$bassPattern");
+
+// Create a function to get the appropriate regex for a given notation
+RegExp chordRegexFor(NoteNotation notation) {
+  return RegExp(
+    rootPatternFor(notation) + suffixPattern + bassPatternFor(notation),
+  );
+}
+
 final RegExp minorSufficRegex = RegExp(minorPattern);
 
 /// Represents a musical chord. For example, Ddim/F# would have:
@@ -77,12 +171,22 @@ class Chord {
 
   bool isMinor() => minorSufficRegex.hasMatch(suffix);
 
-  static Chord parse(String text) {
-    if (!isChord(text)) throw Exception("$text is not a valid chord");
-    final RegExpMatch result = chordRegex.firstMatch(text)!;
-    return Chord(result.namedGroup('root')!,
-        result.namedGroup('suffix') ?? '', result.namedGroup('bass') ?? '');
+  static Chord parse(
+    String text, [
+    NoteNotation notation = NoteNotation.english,
+  ]) {
+    final RegExp regex = chordRegexFor(notation);
+    if (!regex.hasMatch(text)) throw Exception("$text is not a valid chord");
+    final RegExpMatch result = regex.firstMatch(text)!;
+    return Chord(
+      result.namedGroup('root')!,
+      result.namedGroup('suffix') ?? '',
+      result.namedGroup('bass') ?? '',
+    );
   }
 
-  static bool isChord(token) => chordRegex.hasMatch(token);
+  static bool isChord(
+    String token, {
+    NoteNotation notation = NoteNotation.english,
+  }) => chordRegexFor(notation).hasMatch(token);
 }

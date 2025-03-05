@@ -26,59 +26,681 @@ https://github.com/ddycai/chord-transposer
 
 // ignore_for_file: non_constant_identifier_names
 
-import 'chord.dart' show rootPattern, minorPattern, Chord;
+import 'chord.dart'
+    show rootPatternFor, minorPattern, Chord, NoteNotation;
 
-// Chromatic scale starting from C using flats only.
-const List<String> flatScale = [
-  "C",
-  "Db",
-  "D",
-  "Eb",
-  "E",
-  "F",
-  "Gb",
-  "G",
-  "Ab",
-  "A",
-  "Bb",
-  "Cb"
-];
+/// Definition of a key signature in a specific notation
+class NotationKeyDefinition {
+  final String majorKey;
+  final String relativeMinor;
+  final List<String> flatScale;
+  final List<String> sharpScale;
 
-// Chromatic scale starting from C using sharps only.
-const List<String> sharpScale = [
-  "C",
-  "C#",
-  "D",
-  "D#",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "G#",
-  "A",
-  "A#",
-  "B"
-];
+  const NotationKeyDefinition({
+    required this.majorKey,
+    required this.relativeMinor,
+    required this.flatScale,
+    required this.sharpScale,
+  });
+}
 
-// Chromatic scale for F# major which includes E#.
-final List<String> FSharpScale =
-    sharpScale.map((note) => identical(note, "F") ? "E#" : note).toList();
+/// Complete key signature definition for all notations
+class KeyDefinition {
+  final int rank;
+  final KeyType keyType;
+  final bool isStandard; // Standard vs unconventional key
+  final Map<NoteNotation, NotationKeyDefinition> notations;
 
-// Chromatic scale for C# major which includes E# and B#.
-final List<String> CSharpScale =
-    FSharpScale.map((note) => identical(note, "C") ? "B#" : note).toList();
+  const KeyDefinition({
+    required this.rank,
+    required this.keyType,
+    this.isStandard = true,
+    required this.notations,
+  });
+}
 
-// Chromatic scale for Gb major which includes Cb.
-final List<String> GFlatScale =
-    flatScale.map((note) => identical(note, "B") ? "Cb" : note).toList();
+/// Maps notation types to scales
+final Map<NoteNotation, List<List<String>>> baseScales = {
+  // English notation scales
+  NoteNotation.english: [
+    ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"], // flat
+    ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"], // sharp
+  ],
 
-// Chromatic scale for Cb major which includes Cb and Fb.
-final List<String> CFlatScale =
-    GFlatScale.map((note) => identical(note, "E") ? "Fb" : note).toList();
+  // German notation scales
+  NoteNotation.german: [
+    ["C", "Des", "D", "Es", "E", "F", "Ges", "G", "As", "A", "B", "H"], // flat
+    [
+      "C",
+      "Cis",
+      "D",
+      "Dis",
+      "E",
+      "F",
+      "Fis",
+      "G",
+      "Gis",
+      "A",
+      "Ais",
+      "H",
+    ], // sharp
+  ],
 
-final RegExp keySignatureRegExp = RegExp("($rootPattern)($minorPattern)?");
+  // German with accidentals scales
+  NoteNotation.germanWithAccidentals: [
+    ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "B", "H"], // flat
+    ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "H"], // sharp
+  ],
+};
+
+// Special scales for edge cases
+final Map<NoteNotation, List<String>> specialScales = {
+  // F# scales (with E#)
+  NoteNotation.english: [
+    "C",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "E#",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "B",
+  ],
+  NoteNotation.german: [
+    "C",
+    "Cis",
+    "D",
+    "Dis",
+    "E",
+    "Eis",
+    "Fis",
+    "G",
+    "Gis",
+    "A",
+    "Ais",
+    "H",
+  ],
+  NoteNotation.germanWithAccidentals: [
+    "C",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "E#",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "H",
+  ],
+};
+
+// Special C# scales (with E# and B#)
+final Map<NoteNotation, List<String>> cSharpScales = {
+  NoteNotation.english: [
+    "B#",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "E#",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "B",
+  ],
+  NoteNotation.german: [
+    "His",
+    "Cis",
+    "D",
+    "Dis",
+    "E",
+    "Eis",
+    "Fis",
+    "G",
+    "Gis",
+    "A",
+    "Ais",
+    "H",
+  ],
+  NoteNotation.germanWithAccidentals: [
+    "H#",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "E#",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "H",
+  ],
+};
+
+// Special Gb scales (with Cb)
+final Map<NoteNotation, List<String>> gFlatScales = {
+  NoteNotation.english: [
+    "C",
+    "Db",
+    "D",
+    "Eb",
+    "E",
+    "F",
+    "Gb",
+    "G",
+    "Ab",
+    "A",
+    "Bb",
+    "Cb",
+  ],
+  NoteNotation.german: [
+    "C",
+    "Des",
+    "D",
+    "Es",
+    "E",
+    "F",
+    "Ges",
+    "G",
+    "As",
+    "A",
+    "B",
+    "Ces",
+  ],
+  NoteNotation.germanWithAccidentals: [
+    "C",
+    "Db",
+    "D",
+    "Eb",
+    "E",
+    "F",
+    "Gb",
+    "G",
+    "Ab",
+    "A",
+    "B",
+    "Cb",
+  ],
+};
+
+// Special Cb scales (with Fb)
+final Map<NoteNotation, List<String>> cFlatScales = {
+  NoteNotation.english: [
+    "C",
+    "Db",
+    "D",
+    "Eb",
+    "Fb",
+    "F",
+    "Gb",
+    "G",
+    "Ab",
+    "A",
+    "Bb",
+    "Cb",
+  ],
+  NoteNotation.german: [
+    "C",
+    "Des",
+    "D",
+    "Es",
+    "Fes",
+    "F",
+    "Ges",
+    "G",
+    "As",
+    "A",
+    "B",
+    "Ces",
+  ],
+  NoteNotation.germanWithAccidentals: [
+    "C",
+    "Db",
+    "D",
+    "Eb",
+    "Fb",
+    "F",
+    "Gb",
+    "G",
+    "Ab",
+    "A",
+    "B",
+    "Cb",
+  ],
+};
 
 enum KeyType { flat, sharp }
+
+/// Comprehensive definition of all key signatures
+final List<KeyDefinition> keyDefinitions = [
+  // C Major
+  KeyDefinition(
+    rank: 0,
+    keyType: KeyType.sharp,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "C",
+        relativeMinor: "Am",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "C",
+        relativeMinor: "Am",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "C",
+        relativeMinor: "Am",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // Db/C# Major
+  KeyDefinition(
+    rank: 1,
+    keyType: KeyType.flat,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "Db",
+        relativeMinor: "Bbm",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "Des",
+        relativeMinor: "Bm",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "Db",
+        relativeMinor: "Bm",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // D Major
+  KeyDefinition(
+    rank: 2,
+    keyType: KeyType.sharp,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "D",
+        relativeMinor: "Bm",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "D",
+        relativeMinor: "Hm",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "D",
+        relativeMinor: "Hm",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // Eb Major
+  KeyDefinition(
+    rank: 3,
+    keyType: KeyType.flat,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "Eb",
+        relativeMinor: "Cm",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "Es",
+        relativeMinor: "Cm",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "Eb",
+        relativeMinor: "Cm",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // E Major
+  KeyDefinition(
+    rank: 4,
+    keyType: KeyType.sharp,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "E",
+        relativeMinor: "C#m",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "E",
+        relativeMinor: "Cism",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "E",
+        relativeMinor: "C#m",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // F Major
+  KeyDefinition(
+    rank: 5,
+    keyType: KeyType.flat,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "F",
+        relativeMinor: "Dm",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "F",
+        relativeMinor: "Dm",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "F",
+        relativeMinor: "Dm",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // F# Major
+  KeyDefinition(
+    rank: 6,
+    keyType: KeyType.sharp,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "F#",
+        relativeMinor: "D#m",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: specialScales[NoteNotation.english]!,
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "Fis",
+        relativeMinor: "Dism",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: specialScales[NoteNotation.german]!,
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "F#",
+        relativeMinor: "D#m",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: specialScales[NoteNotation.germanWithAccidentals]!,
+      ),
+    },
+  ),
+
+  // Gb Major
+  KeyDefinition(
+    rank: 6,
+    keyType: KeyType.flat,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "Gb",
+        relativeMinor: "Ebm",
+        flatScale: gFlatScales[NoteNotation.english]!,
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "Ges",
+        relativeMinor: "Esm",
+        flatScale: gFlatScales[NoteNotation.german]!,
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "Gb",
+        relativeMinor: "Ebm",
+        flatScale: gFlatScales[NoteNotation.germanWithAccidentals]!,
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // G Major
+  KeyDefinition(
+    rank: 7,
+    keyType: KeyType.sharp,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "G",
+        relativeMinor: "Em",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "G",
+        relativeMinor: "Em",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "G",
+        relativeMinor: "Em",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // Ab Major
+  KeyDefinition(
+    rank: 8,
+    keyType: KeyType.flat,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "Ab",
+        relativeMinor: "Fm",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "As",
+        relativeMinor: "Fm",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "Ab",
+        relativeMinor: "Fm",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // A Major
+  KeyDefinition(
+    rank: 9,
+    keyType: KeyType.sharp,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "A",
+        relativeMinor: "F#m",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "A",
+        relativeMinor: "Fism",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "A",
+        relativeMinor: "F#m",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // Bb Major
+  KeyDefinition(
+    rank: 10,
+    keyType: KeyType.flat,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "Bb",
+        relativeMinor: "Gm",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "B",
+        relativeMinor: "Gm",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "B",
+        relativeMinor: "Gm",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // B Major
+  KeyDefinition(
+    rank: 11,
+    keyType: KeyType.sharp,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "B",
+        relativeMinor: "G#m",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "H",
+        relativeMinor: "Gism",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "H",
+        relativeMinor: "G#m",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // C# Major (unconventional)
+  KeyDefinition(
+    rank: 1,
+    keyType: KeyType.sharp,
+    isStandard: false,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "C#",
+        relativeMinor: "A#m",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: cSharpScales[NoteNotation.english]!,
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "Cis",
+        relativeMinor: "Aism",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: cSharpScales[NoteNotation.german]!,
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "C#",
+        relativeMinor: "A#m",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: cSharpScales[NoteNotation.germanWithAccidentals]!,
+      ),
+    },
+  ),
+
+  // Cb Major (unconventional)
+  KeyDefinition(
+    rank: 11,
+    keyType: KeyType.flat,
+    isStandard: false,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "Cb",
+        relativeMinor: "Abm",
+        flatScale: cFlatScales[NoteNotation.english]!,
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "Ces",
+        relativeMinor: "Asm",
+        flatScale: cFlatScales[NoteNotation.german]!,
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "Cb",
+        relativeMinor: "Abm",
+        flatScale: cFlatScales[NoteNotation.germanWithAccidentals]!,
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+
+  // D# Major (unconventional)
+  KeyDefinition(
+    rank: 3,
+    keyType: KeyType.sharp,
+    isStandard: false,
+    notations: {
+      NoteNotation.english: NotationKeyDefinition(
+        majorKey: "D#",
+        relativeMinor: "",
+        flatScale: baseScales[NoteNotation.english]![0],
+        sharpScale: baseScales[NoteNotation.english]![1],
+      ),
+      NoteNotation.german: NotationKeyDefinition(
+        majorKey: "Dis",
+        relativeMinor: "",
+        flatScale: baseScales[NoteNotation.german]![0],
+        sharpScale: baseScales[NoteNotation.german]![1],
+      ),
+      NoteNotation.germanWithAccidentals: NotationKeyDefinition(
+        majorKey: "D#",
+        relativeMinor: "",
+        flatScale: baseScales[NoteNotation.germanWithAccidentals]![0],
+        sharpScale: baseScales[NoteNotation.germanWithAccidentals]![1],
+      ),
+    },
+  ),
+];
 
 class KeySignature {
   String majorKey;
@@ -86,31 +708,17 @@ class KeySignature {
   KeyType keyType;
   int rank;
   List<String> chromaticScale;
-  KeySignature(this.majorKey, this.relativeMinor, this.keyType, this.rank,
-      this.chromaticScale);
+  NoteNotation notation;
+
+  KeySignature(
+    this.majorKey,
+    this.relativeMinor,
+    this.keyType,
+    this.rank,
+    this.chromaticScale,
+    this.notation,
+  );
 }
-
-// A list of all the available key signatures.
-final List<KeySignature> signatures = [
-  KeySignature("C", "Am", KeyType.sharp, 0, sharpScale),
-  KeySignature("Db", "Bbm", KeyType.flat, 1, flatScale),
-  KeySignature("D", "Bm", KeyType.sharp, 2, sharpScale),
-  KeySignature("Eb", "Cm", KeyType.flat, 3, flatScale),
-  KeySignature("E", "C#m", KeyType.sharp, 4, sharpScale),
-  KeySignature("F", "Dm", KeyType.flat, 5, flatScale),
-  KeySignature("Gb", "Ebm", KeyType.flat, 6, GFlatScale),
-  KeySignature("F#", "D#m", KeyType.sharp, 6, FSharpScale),
-  KeySignature("G", "Em", KeyType.sharp, 7, sharpScale),
-  KeySignature("Ab", "Fm", KeyType.flat, 8, flatScale),
-  KeySignature("A", "F#m", KeyType.sharp, 9, sharpScale),
-  KeySignature("Bb", "Gm", KeyType.flat, 10, flatScale),
-  KeySignature("B", "G#m", KeyType.sharp, 11, sharpScale),
-
-  // Unconventional key signatures:
-  KeySignature("C#", "A#m", KeyType.sharp, 1, CSharpScale),
-  KeySignature("Cb", "Abm", KeyType.flat, 11, CFlatScale),
-  KeySignature("D#", "", KeyType.sharp, 8, sharpScale),
-];
 
 /// An object that parses and calculates key signatures.
 class KeySignatureProcessor {
@@ -120,32 +728,72 @@ class KeySignatureProcessor {
   /// A map of all the KeySignatures with their rank. `<`key rank, key signature>.
   late Map<num, KeySignature> _rankMap;
 
-  KeySignatureProcessor() {
+  final NoteNotation notation;
+
+  KeySignatureProcessor({this.notation = NoteNotation.english}) {
     _keySignatureMap = {};
     _rankMap = {};
 
-    /// Generated the rankMap and keySignatureMap from the list of signatures.
-    for (KeySignature signature in signatures) {
-      _keySignatureMap.addAll({signature.majorKey: signature});
-      _keySignatureMap.addAll({signature.relativeMinor: signature});
-      if (!_rankMap.containsKey(signature.rank)) {
-        _rankMap.addAll({signature.rank: signature});
+    // Generate signatures from the definitions
+    for (final keyDef in keyDefinitions) {
+      final notationDef = keyDef.notations[notation]!;
+      final scale =
+          keyDef.keyType == KeyType.flat
+              ? notationDef.flatScale
+              : notationDef.sharpScale;
+
+      final signature = KeySignature(
+        notationDef.majorKey,
+        notationDef.relativeMinor,
+        keyDef.keyType,
+        keyDef.rank,
+        scale,
+        notation,
+      );
+
+      _keySignatureMap[signature.majorKey] = signature;
+      if (signature.relativeMinor.isNotEmpty) {
+        _keySignatureMap[signature.relativeMinor] = signature;
+      }
+
+      // Only add standard keys to rank map to avoid duplicates
+      if (keyDef.isStandard && !_rankMap.containsKey(keyDef.rank)) {
+        _rankMap[keyDef.rank] = signature;
       }
     }
   }
 
   /// Returns the KeySignature with the specific name or throws an error if the key signature is not valid.
   KeySignature parse(String text) {
-    if (keySignatureRegExp.hasMatch(text)) {
-      final Chord chord = Chord.parse(text);
+    final regExpForNotation = RegExp(
+      "(${rootPatternFor(notation)})($minorPattern)?",
+    );
+
+    if (regExpForNotation.hasMatch(text)) {
+      final Chord chord = Chord.parse(text, notation);
       final String signatureName =
           chord.isMinor() ? "${chord.root}m" : chord.root;
       final KeySignature? foundSignature = _keySignatureMap[signatureName];
       if (foundSignature != null) return foundSignature;
 
       // If all else fails, try to find any key with this chord in it.
-      for (KeySignature signature in signatures) {
-        if (signature.chromaticScale.contains(chord.root)) return signature;
+      for (KeyDefinition keyDef in keyDefinitions) {
+        final notationDef = keyDef.notations[notation]!;
+        final scale =
+            keyDef.keyType == KeyType.flat
+                ? notationDef.flatScale
+                : notationDef.sharpScale;
+
+        if (scale.contains(chord.root)) {
+          return KeySignature(
+            notationDef.majorKey,
+            notationDef.relativeMinor,
+            keyDef.keyType,
+            keyDef.rank,
+            scale,
+            notation,
+          );
+        }
       }
     }
     throw Exception("$text is not a valid key signature.");
@@ -153,7 +801,8 @@ class KeySignatureProcessor {
 
   /// Gets Keysignature from rank.
   KeySignature fromRank(int rank) {
-    final KeySignature? signature = _rankMap[rank];
+    final normalizedRank = (rank % 12 + 12) % 12; // Ensure it's 0-11
+    final KeySignature? signature = _rankMap[normalizedRank];
     if (signature != null) return signature;
     throw Exception("$rank is not a valid rank.");
   }
